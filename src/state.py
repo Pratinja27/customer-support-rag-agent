@@ -5,7 +5,7 @@ from langchain_core.documents import Document
 
 class GraphState(TypedDict):
     """
-    Shared state across all LangGraph nodes.
+    Shared state passed between LangGraph nodes.
     """
 
     question: str
