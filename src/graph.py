@@ -1,29 +1,46 @@
 from langgraph.graph import StateGraph, START, END
 
 from src.state import GraphState
-from src.rag import answer_question
+from src.rag import retrieve_documents, generate_answer
 
 
-def rag_node(state: GraphState):
+def retrieve_node(state: GraphState):
     """
-    Execute the RAG pipeline.
+    Retrieve relevant documents from ChromaDB.
     """
 
-    result = answer_question(state["question"])
+    question = state["question"]
+
+    docs = retrieve_documents(question)
 
     return {
-        "question": state["question"],
-        "retrieved_docs": result["documents"],
-        "answer": result["answer"],
+        "question": question,
+        "retrieved_docs": docs,
+    }
+
+
+def generate_node(state: GraphState):
+    """
+    Generate an answer using Gemini.
+    """
+
+    answer = generate_answer(
+        state["question"],
+        state["retrieved_docs"],
+    )
+
+    return {
+        "answer": answer,
     }
 
 
 builder = StateGraph(GraphState)
 
-builder.add_node("rag", rag_node)
+builder.add_node("retrieve", retrieve_node)
+builder.add_node("generate", generate_node)
 
-builder.add_edge(START, "rag")
-
-builder.add_edge("rag", END)
+builder.add_edge(START, "retrieve")
+builder.add_edge("retrieve", "generate")
+builder.add_edge("generate", END)
 
 graph = builder.compile()

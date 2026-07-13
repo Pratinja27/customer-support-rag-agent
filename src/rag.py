@@ -27,6 +27,35 @@ def get_retriever():
     return vector_store.as_retriever(search_kwargs={"k": 3})
 
 
+def retrieve_documents(question: str):
+    """
+    Retrieve the top 3 relevant documents.
+    """
+
+    retriever = get_retriever()
+
+    return retriever.invoke(question)
+
+
+def generate_answer(question: str, docs):
+    """
+    Generate an answer using Gemini.
+    """
+
+    context = "\n\n".join(doc.page_content for doc in docs)
+
+    llm = get_llm()
+
+    chain = PROMPT | llm
+
+    response = chain.invoke(
+        {
+            "question": question,
+            "context": context,
+        }
+    )
+
+    return response.content
 PROMPT = ChatPromptTemplate.from_template(
     """
 You are a customer support assistant for GigaCorp.

@@ -6,4 +6,5 @@ response = graph.invoke(
     }
 )
 
+print("\nAnswer:\n")
 print(response["answer"])
