@@ -69,7 +69,17 @@ def get_retriever():
 
 
 def retrieve_documents(question):
-    return get_retriever().invoke(question)
+    print("STEP 1: Starting retrieval")
+
+    retriever = get_retriever()
+
+    print("STEP 2: Retriever created")
+
+    docs = retriever.invoke(question)
+
+    print("STEP 3: Retrieved", len(docs), "documents")
+
+    return docs
 
 
 def format_history(history):
@@ -110,6 +120,11 @@ def generate_answer(question, docs, history):
             "question": question,
         }
     )
+    print("STEP 4: Calling Gemini")
+
+    response = chain.invoke(...)
+
+    print("STEP 5: Gemini responded")
 
     return response.content
 
