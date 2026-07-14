@@ -39,9 +39,14 @@ def get_vector_store():
 
     import os
 
-    print("Current folder:", os.getcwd())
-    print("Files:", os.listdir())
-    print("Chroma exists:", os.path.exists("chroma_db"))
+    print("CURRENT DIRECTORY:")
+    print(os.getcwd())
+
+    print("FILES:")
+    print(os.listdir())
+
+    print("CHROMA FILES:")
+    print(os.listdir("chroma_db"))
 
     embeddings = HuggingFaceEmbeddings(
         model_name="sentence-transformers/all-MiniLM-L6-v2"
@@ -52,7 +57,7 @@ def get_vector_store():
         embedding_function=embeddings,
     )
 
-    print("Chunks in DB:", db._collection.count())
+    print("TOTAL CHUNKS:", db._collection.count())
 
     return db
 
