@@ -8,10 +8,8 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_chroma import Chroma
 from langchain_community.embeddings import HuggingFaceEmbeddings
 
-BASE_DIR = Path(__file__).resolve().parent.parent
-
-DATA_FOLDER = BASE_DIR / "data"
-CHROMA_PATH = BASE_DIR / "chroma_db"
+DATA_FOLDER = "data"
+CHROMA_PATH = "chroma_db"
 
 def load_documents():
     documents = []
@@ -53,8 +51,7 @@ def create_vector_store():
     db = Chroma.from_documents(
         documents=chunks,
         embedding=embeddings,
-        persist_directory=CHROMA_PATH,
-    )
+        persist_directory=str(CHROMA_PATH),    )
     print("Vector Store Count:", db._collection.count())    
     print("Vector database created successfully!")
     

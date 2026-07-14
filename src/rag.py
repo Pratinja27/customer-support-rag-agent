@@ -6,11 +6,7 @@ from langchain_core.messages import AIMessage, HumanMessage
 from langchain_core.prompts import ChatPromptTemplate
 
 from src.llm import get_llm
-
-BASE_DIR = Path(__file__).resolve().parent.parent
-CHROMA_PATH = BASE_DIR / "chroma_db"
-
-
+CHROMA_PATH = "chroma_db"
 PROMPT = ChatPromptTemplate.from_template("""
 You are GigaCorp's Customer Support Assistant.
 
@@ -40,14 +36,25 @@ Answer:
 
 
 def get_vector_store():
+
+    import os
+
+    print("Current folder:", os.getcwd())
+    print("Files:", os.listdir())
+    print("Chroma exists:", os.path.exists("chroma_db"))
+
     embeddings = HuggingFaceEmbeddings(
         model_name="sentence-transformers/all-MiniLM-L6-v2"
     )
 
-    return Chroma(
-        persist_directory=str(CHROMA_PATH),
+    db = Chroma(
+        persist_directory="chroma_db",
         embedding_function=embeddings,
     )
+
+    print("Chunks in DB:", db._collection.count())
+
+    return db
 
 
 def get_retriever():
