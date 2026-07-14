@@ -113,6 +113,8 @@ def generate_answer(question, docs, history):
 
     chain = PROMPT | llm
 
+    print("STEP 4: Calling Gemini")
+
     response = chain.invoke(
         {
             "history": history_text,
@@ -120,14 +122,10 @@ def generate_answer(question, docs, history):
             "question": question,
         }
     )
-    print("STEP 4: Calling Gemini")
-
-    response = chain.invoke(...)
 
     print("STEP 5: Gemini responded")
 
     return response.content
-
 
 def answer_question(question):
 
