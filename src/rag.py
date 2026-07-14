@@ -2,6 +2,7 @@ from pathlib import Path
 
 from langchain_chroma import Chroma
 from langchain_community.embeddings import HuggingFaceEmbeddings
+from langchain_core.messages import AIMessage, HumanMessage
 from langchain_core.prompts import ChatPromptTemplate
 
 from src.llm import get_llm
@@ -10,81 +11,81 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 CHROMA_PATH = BASE_DIR / "chroma_db"
 
 
-def get_retriever():
-    """
-    Load the existing ChromaDB and return a retriever.
-    """
+PROMPT = ChatPromptTemplate.from_template("""
+You are GigaCorp's Customer Support Assistant.
 
-    embeddings = HuggingFaceEmbeddings(
-        model_name="sentence-transformers/all-MiniLM-L6-v2"
-    )
+Use BOTH:
+1. Conversation History
+2. Company Context
 
-    vector_store = Chroma(
-        persist_directory=str(CHROMA_PATH),
-        embedding_function=embeddings,
-    )
-
-    return vector_store.as_retriever(search_kwargs={"k": 3})
-
-
-def retrieve_documents(question: str):
-    """
-    Retrieve the top 3 relevant documents.
-    """
-
-    retriever = get_retriever()
-
-    return retriever.invoke(question)
-
-
-def generate_answer(question: str, docs):
-    """
-    Generate an answer using Gemini.
-    """
-
-    context = "\n\n".join(doc.page_content for doc in docs)
-
-    llm = get_llm()
-
-    chain = PROMPT | llm
-
-    response = chain.invoke(
-        {
-            "question": question,
-            "context": context,
-        }
-    )
-
-    return response.content
-PROMPT = ChatPromptTemplate.from_template(
-    """
-You are a customer support assistant for GigaCorp.
-
-Answer ONLY using the information provided in the context.
-
-If the answer is not present in the context, say:
+Rules:
+- Use conversation history to understand follow-up questions such as "there", "that", "it", "those", etc.
+- Answer ONLY using the company context.
+- Do not invent information.
+- If the answer is not present in the context, reply exactly:
 
 "I couldn't find that information in the company's knowledge base."
 
-Context:
+Conversation History:
+{history}
+
+Company Context:
 {context}
 
 Question:
 {question}
-"""
-)
+
+Answer:
+""")
 
 
-def answer_question(question: str):
-    """
-    Retrieve relevant documents and generate an answer using Gemini.
-    """
+def get_vector_store():
+    embeddings = HuggingFaceEmbeddings(
+        model_name="sentence-transformers/all-MiniLM-L6-v2"
+    )
 
-    retriever = get_retriever()
+    return Chroma(
+        persist_directory=str(CHROMA_PATH),
+        embedding_function=embeddings,
+    )
 
-    docs = retriever.invoke(question)
 
-    context = "\n\n".join(doc.page_content for doc in docs)
+def get_retriever():
+    return get_vector_store().as_retriever(
+        search_kwargs={"k": 4}
+    )
+
+
+def retrieve_documents(question):
+    return get_retriever().invoke(question)
+
+
+def format_history(history):
+
+    if not history:
+        return "No previous conversation."
+
+    text = []
+
+    for msg in history:
+
+        if isinstance(msg, HumanMessage):
+            text.append(f"User: {msg.content}")
+
+        elif isinstance(msg, AIMessage):
+            text.append(f"Assistant: {msg.content}")
+
+    return "\n".join(text)
+
+
+def generate_answer(question, docs, history):
+
+    context = "\n\n".join(
+        doc.page_content
+        for doc in docs
+    )
+
+    history_text = format_history(history)
 
     llm = get_llm()
 
@@ -92,12 +93,26 @@ def answer_question(question: str):
 
     response = chain.invoke(
         {
+            "history": history_text,
             "context": context,
             "question": question,
         }
     )
 
+    return response.content
+
+
+def answer_question(question):
+
+    docs = retrieve_documents(question)
+
+    answer = generate_answer(
+        question,
+        docs,
+        [],
+    )
+
     return {
-        "answer": response.content,
+        "answer": answer,
         "documents": docs,
     }

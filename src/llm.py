@@ -7,12 +7,15 @@ load_dotenv()
 
 
 def get_llm():
-    """
-    Returns a configured Gemini LLM instance.
-    """
+    api_key = os.getenv("GOOGLE_API_KEY")
+
+    if not api_key:
+        raise ValueError(
+            "GOOGLE_API_KEY not found. Please check your .env file."
+        )
 
     return ChatGoogleGenerativeAI(
         model="gemini-2.5-flash",
         temperature=0,
-        google_api_key=os.getenv("GOOGLE_API_KEY"),
+        google_api_key=api_key,
     )

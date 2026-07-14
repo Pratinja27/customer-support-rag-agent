@@ -55,11 +55,12 @@ def create_vector_store():
         embedding=embeddings,
         persist_directory=CHROMA_PATH,
     )
-
+    print("Vector Store Count:", db._collection.count())    
     print("Vector database created successfully!")
-
+    
     return db
 
 
 if __name__ == "__main__":
     create_vector_store()
+
