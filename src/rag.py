@@ -1,12 +1,12 @@
-from pathlib import Path
-
 from langchain_chroma import Chroma
 from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain_core.messages import AIMessage, HumanMessage
 from langchain_core.prompts import ChatPromptTemplate
 
 from src.llm import get_llm
+
 CHROMA_PATH = "chroma_db"
+
 PROMPT = ChatPromptTemplate.from_template("""
 You are GigaCorp's Customer Support Assistant.
 
@@ -37,49 +37,26 @@ Answer:
 
 def get_vector_store():
 
-    import os
-
-    print("CURRENT DIRECTORY:")
-    print(os.getcwd())
-
-    print("FILES:")
-    print(os.listdir())
-
-    print("CHROMA FILES:")
-    print(os.listdir("chroma_db"))
-
     embeddings = HuggingFaceEmbeddings(
         model_name="sentence-transformers/all-MiniLM-L6-v2"
     )
 
-    db = Chroma(
-        persist_directory="chroma_db",
+    return Chroma(
+        persist_directory=CHROMA_PATH,
         embedding_function=embeddings,
     )
 
-    print("TOTAL CHUNKS:", db._collection.count())
-
-    return db
-
 
 def get_retriever():
+
     return get_vector_store().as_retriever(
         search_kwargs={"k": 4}
     )
 
 
 def retrieve_documents(question):
-    print("STEP 1: Starting retrieval")
 
-    retriever = get_retriever()
-
-    print("STEP 2: Retriever created")
-
-    docs = retriever.invoke(question)
-
-    print("STEP 3: Retrieved", len(docs), "documents")
-
-    return docs
+    return get_retriever().invoke(question)
 
 
 def format_history(history):
@@ -113,8 +90,6 @@ def generate_answer(question, docs, history):
 
     chain = PROMPT | llm
 
-    print("STEP 4: Calling Gemini")
-
     response = chain.invoke(
         {
             "history": history_text,
@@ -123,9 +98,8 @@ def generate_answer(question, docs, history):
         }
     )
 
-    print("STEP 5: Gemini responded")
-
     return response.content
+
 
 def answer_question(question):
 
